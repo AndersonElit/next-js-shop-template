@@ -1,22 +1,21 @@
 'use client';
 
-import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useCart } from "@/context/CartContext";
-import { getProducts, Product } from "@/services/api";
 import Link from "next/link";
+import { ProductGrid } from "@/src/features/products/presentation/components/ProductGrid";
+import { ProductService } from "@/src/features/products/application/productService";
+import { Product } from "@/src/features/products/domain/types";
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const { addToCart } = useCart();
   const [loading, setLoading] = useState(true);
+  const productService = new ProductService();
 
   useEffect(() => {
     async function loadProducts() {
       try {
-        const products = await getProducts();
-        // Get first 3 products as featured
-        setFeaturedProducts(products.slice(0, 3));
+        const products = await productService.getFeaturedProducts(3);
+        setFeaturedProducts(products);
       } catch (error) {
         console.error('Failed to load products:', error);
       } finally {
@@ -48,61 +47,7 @@ export default function Home() {
       {/* Featured Products Section */}
       <section>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Products</h2>
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border rounded-lg overflow-hidden animate-pulse">
-                <div className="aspect-w-1 aspect-h-1 bg-gray-200">
-                  <div className="h-48 bg-gray-200"></div>
-                </div>
-                <div className="p-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {featuredProducts.map((product) => (
-              <div key={product.id} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <Link href={`/products/${product.id}`} className="block relative">
-                  <div className="relative w-full pt-[100%]">
-                    {product.image ? (
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover absolute inset-0"
-                        priority={true}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400">No image</span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-                <div className="p-4">
-                  <Link href={`/products/${product.id}`}>
-                    <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-1">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  <p className="text-gray-600 mt-1">${product.price.toFixed(2)}</p>
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">{product.description}</p>
-                  <button
-                    onClick={() => addToCart(product, 1)}
-                    className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <ProductGrid products={featuredProducts} loading={loading} />
       </section>
 
       {/* Categories Section */}
